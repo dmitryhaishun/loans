@@ -1,0 +1,13 @@
+.coverage-tests-template:
+  image: $AND_DOCKER_PROXY_REGISTRY_NAME/python:3.11.2-slim
+  before_script:
+    - export  $(grep -v '^#' $AND_ENV_DEV | xargs -0) > /dev/null
+    - pip install --no-cache-dir poetry==1.2.2 && poetry config virtualenvs.create false
+    - poetry install --no-root
+  script:
+    - coverage run -m pytest || true
+    - coverage xml -o $CI_PROJECT_DIR/coverage/coverage.xml
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR/coverage/coverage.xml # Сохраняем данные
+    expire_in: 1 day

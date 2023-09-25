@@ -1,0 +1,12 @@
+.pre-merge-tests-template:
+    image: $AND_DOCKER_PROXY_REGISTRY_NAME/python:3.11.2-slim
+    before_script:
+      - export  $(grep -v '^#' $AND_ENV_DEV | xargs -0) > /dev/null
+      - pip install --no-cache-dir poetry==1.2.2 && poetry config virtualenvs.create false
+      - poetry install --no-root
+    script:
+      - poetry run isort app/
+      - poetry run black app/
+      - poetry run flake8 app/
+      - poetry run mypy app/
+      - poetry run pytest -v -s

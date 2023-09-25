@@ -1,0 +1,22 @@
+FROM python:3.11-slim-bullseye
+
+RUN mkdir /app
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+ENV PYTHONPATH=/app:$PYTHONPATH
+
+RUN pip install --no-cache-dir poetry==1.2.2 \
+    && poetry config virtualenvs.create false
+
+COPY pyproject.toml /app
+
+RUN poetry install --no-root
+
+COPY . .
+
+EXPOSE 8000
+
+ENTRYPOINT ["uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]

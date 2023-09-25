@@ -1,0 +1,48 @@
+[tool.poetry]
+name = "loans"
+version = "0.1.0"
+description = ""
+authors = ["Anastasiya Dzehil <a.dzehil@@andersenlab.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.87.0"
+alembic = "^1.8.1"
+asyncpg = "^0.27.0"
+uvicorn = "^0.20.0"
+sqlalchemy = {version = "^1.4.44", extras = ["asyncio"]}
+iso4217 = "^1.11.20220401"
+python-dotenv = "^0.21.1"
+kafka-python = "^2.0.2"
+flower = "^1.2.0"
+redis = "^4.5.4"
+celery = "^5.2.7"
+coverage = "^7.3.1"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.2.0"
+isort = "^5.10.1"
+black = "^22.10.0"
+flake8 = "^5.0.4"
+flake8-annotations = "^2.9.1"
+mypy = "^0.991"
+httpx = "^0.24.0"
+pytest-asyncio = "^0.21.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 88
+
+[tool.isort]
+profile = "black"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  ".", "app",
+]
+asyncio_mode="auto"

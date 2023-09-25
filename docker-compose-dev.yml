@@ -1,0 +1,104 @@
+version: '3.7'
+
+services:
+
+
+  py-loans:
+    container_name: $APP1
+    hostname: $APP1
+    image: $AND_DOCKER_REGISTRY_NAME/$APP1:$CI_COMMIT_BRANCH
+    env_file:
+      - $AND_ENV_DEV
+    ports:
+      - "8004:8000"
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: "127.0.0.1:24224"
+        #fluentd-async-connect: "true"
+        tag: $APP2
+    restart: always
+    networks:
+      - python-net
+
+  py-loans-celery:
+      container_name: $APP2
+      hostname: $APP2
+      image: $AND_DOCKER_REGISTRY_NAME/$APP2:$CI_COMMIT_BRANCH
+      env_file:
+        - $AND_ENV_DEV
+      command: celery -A app.celery_loans.tasks worker -l info
+      logging:
+        driver: fluentd
+        options:
+          fluentd-address: "127.0.0.1:24224"
+          #fluentd-async-connect: "true"
+          tag: $APP2
+      restart: always
+      depends_on:
+        - $APP1
+      networks:
+        - python-net
+
+  py-loans-celery-beat:
+      container_name: $APP3
+      hostname: $APP3
+      image: $AND_DOCKER_REGISTRY_NAME/$APP3:$CI_COMMIT_BRANCH
+      env_file:
+        - $AND_ENV_DEV
+      command: celery -A app.celery_loans.tasks beat -l info
+      logging:
+        driver: fluentd
+        options:
+          fluentd-address: "127.0.0.1:24224"
+          #fluentd-async-connect: "true"
+          tag: $APP3
+      restart: always
+      depends_on:
+        - $APP1
+      networks:
+        - python-net
+
+  py-loans-flower:
+      container_name: $APP5
+      hostname: $APP5
+      image: $AND_DOCKER_REGISTRY_NAME/$APP5:$CI_COMMIT_BRANCH
+      env_file:
+        - $AND_ENV_DEV
+      ports:
+        - "5558:5555"
+      command: celery -A app.celery_loans.tasks flower --address=0.0.0.0
+      logging:
+        driver: fluentd
+        options:
+          fluentd-address: "127.0.0.1:24224"
+          #fluentd-async-connect: "true"
+          tag: $APP5
+      restart: always
+      depends_on:
+        - $APP1
+      networks:
+        - python-net
+
+  py-loans-consumer:
+      container_name: $APP4
+      hostname: $APP4
+      image: $AND_DOCKER_REGISTRY_NAME/$APP4:$CI_COMMIT_BRANCH
+      env_file:
+        - $AND_ENV_DEV
+      logging:
+        driver: fluentd
+        options:
+          fluentd-address: "127.0.0.1:24224"
+          #fluentd-async-connect: "true"
+          tag: $APP4
+      restart: always
+      depends_on:
+        - $APP1
+      networks:
+        - python-net
+
+networks:
+  python-net:
+    name: python-net
+    external: true

@@ -1,0 +1,26 @@
+ARG AND_DOCKER_PROXY_REGISTRY_NAME
+
+FROM $AND_DOCKER_PROXY_REGISTRY_NAME/python:3.11.2-slim
+
+RUN mkdir /app
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+ENV PYTHONPATH=/app:$PYTHONPATH
+
+RUN pip install watchdog
+
+RUN pip install --no-cache-dir poetry==1.2.2 \
+    && poetry config virtualenvs.create false
+
+COPY pyproject.toml /app
+
+RUN poetry install --no-root
+
+COPY . .
+
+EXPOSE 8001
+
+ENTRYPOINT ["watchmedo", "auto-restart", "--directory=./kafka_core", "--pattern=*.py", "--recursive", "--", "python3", "./kafka_core/consumer.py"]

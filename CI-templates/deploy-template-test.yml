@@ -1,0 +1,9 @@
+.deploy-template-test:
+  before_script:
+    - echo "$AND_DOCKER_REGISTRY_RO_PASS" | docker login -u nexus-ro "$AND_DOCKER_REGISTRY" --password-stdin
+  script:
+    - docker-compose -f docker-compose-test.yml down || true
+    - docker image prune -f || true
+    - docker-compose -f docker-compose-test.yml pull
+    - docker-compose -f docker-compose-test.yml up --force-recreate -d
+    - docker exec py-loans alembic upgrade head

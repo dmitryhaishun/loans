@@ -1,0 +1,147 @@
+version: '3.7'
+
+services:
+
+  loans:
+    container_name: loan
+    hostname: loan
+    image: loan
+    build:
+      context: .
+      dockerfile: ./docker/docker_local/Dockerfile
+    env_file:
+      - .env
+    environment:
+      - DB_NAME=${DB_NAME_LOANS}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+    ports:
+      - "8007:8007"
+    links:
+      - loan-redis
+    restart: always
+    networks:
+      - python-net
+    volumes:
+      - .:/app
+
+  loan-worker:
+    container_name: loan-worker
+    hostname: loan-worker
+    image: loan-worker
+    build:
+      context: .
+      dockerfile: ./docker/docker_local/Dockerfile.celery
+    env_file:
+      - .env
+    restart: always
+    command: celery -A app.celery_loans.tasks worker -l info
+    depends_on:
+      - loan-redis
+    links:
+      - loan-redis
+    networks:
+      - python-net
+    volumes:
+      - .:/app
+
+
+  loan-beat:
+    container_name: loan-beat
+    hostname: loan-beat
+    image: loan-beat
+    build:
+      context: .
+      dockerfile: ./docker/docker_local/Dockerfile.celery-beat
+    env_file:
+      - .env
+    restart: always
+    command: celery -A app.celery_loans.tasks beat -l info
+    depends_on:
+      - loan-redis
+      - loan-worker
+    links:
+      - loan-redis
+      - loan-worker
+    networks:
+      - python-net
+    volumes:
+      - .:/app
+
+  loan-flower:
+    container_name: loan-flower
+    hostname: loan-flower
+    image: loan-flower
+    build:
+      context: .
+      dockerfile: ./docker/docker_local/Dockerfile.flower
+    env_file:
+      - .env
+    restart: always
+    ports:
+      - '5556:5555'
+    command: celery -A app.celery_loans.tasks flower --address=0.0.0.0
+    depends_on:
+      - loan-worker
+      - loan-redis
+    links:
+      - loan-worker
+      - loan-redis
+    networks:
+      - python-net
+    volumes:
+      - .:/app
+
+  loan-consumer:
+    container_name: loan-consumer
+    hostname: loan-consumer
+    image: loan-consumer
+    env_file:
+      - .env
+    build:
+      context: .
+      dockerfile: ./docker/docker_local/Dockerfile.consumer
+    restart: always
+    networks:
+      - python-net
+    volumes:
+      - .:/app
+
+#  template-db:
+#    container_name: template-db
+#    image: postgres:15-alpine
+#    hostname: template-db
+#    env_file:
+#      - .env
+#    environment:
+#      - DB_NAME=${POSTGRES_DB}
+#      - DB_USER=${POSTGRES_USER}
+#      - DB_PASSWORD=${POSTGRES_PASSWORD}
+#    networks:
+#      - python-net
+#    ports:
+#      - "5434:5432"
+#    volumes:
+#      - postgres_python_template:/var/lib/postgresql/data
+
+
+  loan-redis:
+    image: redis:6.0
+    container_name: loan-redis
+    hostname: loan-redis
+    ports:
+      - "6384:6379"
+    networks:
+      - python-net
+    restart: always
+    volumes:
+      - template_redis_data:/var/lib/redis/data
+
+networks:
+  python-net:
+    driver: bridge
+    name: python-net
+
+volumes:
+  postgres_python_template:
+  template_redis_data:

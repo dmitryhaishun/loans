@@ -1,0 +1,9 @@
+.deploy-template-prod:
+  before_script:
+    - echo "$AND_DOCKER_REGISTRY_RO_PASS" | docker login -u nexus-ro "$AND_DOCKER_REGISTRY" --password-stdin
+  script:
+    - docker-compose -а docker-compose-prod.yml down || true
+    - docker image prune -f || true
+    - docker-compose -f docker-compose-prod.yml pull
+    - docker-compose -f docker-compose-prod.yml up --force-recreate -d
+    - docker exec $APP1 alembic upgrade head

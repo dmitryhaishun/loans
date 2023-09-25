@@ -1,0 +1,10 @@
+.build-template:
+  before_script:
+    - echo "$AND_DOCKER_REGISTRY_RW_PASS" | docker login -u nexus "$AND_DOCKER_REGISTRY" --password-stdin
+  script:
+    - docker build --tag $AND_DOCKER_REGISTRY_NAME/$APP:$CI_COMMIT_BRANCH
+     -f docker/Dockerfile.$APP 
+     --build-arg BUILDKIT_INLINE_CACHE=1 
+     --build-arg AND_DOCKER_PROXY_REGISTRY_NAME=$AND_DOCKER_PROXY_REGISTRY_NAME .
+    - docker push $AND_DOCKER_REGISTRY_NAME/$APP:$CI_COMMIT_BRANCH
+    - docker rmi -f $AND_DOCKER_REGISTRY_NAME/$APP:$CI_COMMIT_BRANCH || true
